@@ -10,8 +10,8 @@ static void run(const char *prog)
     int ptr = 0;
     for (int pc = 0; prog[pc]; pc++) {
         switch (prog[pc]) {
-        case '>': ptr++; break;
-        case '<': ptr--; break;
+        case '>': ptr = (ptr + 1) % TAPE_SIZE; break;
+        case '<': ptr = (ptr + TAPE_SIZE - 1) % TAPE_SIZE; break;
         case '+': tape[ptr]++; break;
         case '-': tape[ptr]--; break;
         case '.': putchar(tape[ptr]); break;
