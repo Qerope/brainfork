@@ -4,6 +4,22 @@
 #define TAPE_SIZE 30000
 
 static unsigned char tape[TAPE_SIZE];
+static int jump[1 << 16];
+
+static int build_jumps(const char *prog)
+{
+    int stack[4096], sp = 0;
+    for (int pc = 0; prog[pc]; pc++) {
+        if (prog[pc] == '[') {
+            stack[sp++] = pc;
+        } else if (prog[pc] == ']') {
+            int open = stack[--sp];
+            jump[open] = pc;
+            jump[pc] = open;
+        }
+    }
+    return 0;
+}
 
 static void run(const char *prog)
 {
@@ -16,26 +32,8 @@ static void run(const char *prog)
         case '-': tape[ptr]--; break;
         case '.': putchar(tape[ptr]); break;
         case ',': tape[ptr] = getchar(); break;
-        case '[':
-            if (!tape[ptr]) {
-                int d = 1;
-                while (d) {
-                    pc++;
-                    if (prog[pc] == '[') d++;
-                    else if (prog[pc] == ']') d--;
-                }
-            }
-            break;
-        case ']':
-            if (tape[ptr]) {
-                int d = 1;
-                while (d) {
-                    pc--;
-                    if (prog[pc] == ']') d++;
-                    else if (prog[pc] == '[') d--;
-                }
-            }
-            break;
+        case '[': if (!tape[ptr]) pc = jump[pc]; break;
+        case ']': if (tape[ptr]) pc = jump[pc]; break;
         }
     }
 }
@@ -43,5 +41,7 @@ static void run(const char *prog)
 int main(int argc, char **argv)
 {
     run("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.");
+    if (build_jumps(src) != 0)
+        return 1;
     return 0;
 }
