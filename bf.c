@@ -13,10 +13,18 @@ static int build_jumps(const char *prog)
         if (prog[pc] == '[') {
             stack[sp++] = pc;
         } else if (prog[pc] == ']') {
+            if (sp == 0) {
+                fprintf(stderr, "unmatched ] at %d\n", pc);
+                return -1;
+            }
             int open = stack[--sp];
             jump[open] = pc;
             jump[pc] = open;
         }
+    }
+    if (sp != 0) {
+        fprintf(stderr, "unmatched [ at %d\n", stack[sp - 1]);
+        return -1;
     }
     return 0;
 }
