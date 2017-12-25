@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define TAPE_SIZE 30000
@@ -48,8 +49,22 @@ static void run(const char *prog)
 
 int main(int argc, char **argv)
 {
-    run("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.");
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s prog.bf\n", argv[0]);
+        return 1;
+    }
+    FILE *f = fopen(argv[1], "rb");
+    if (!f) {
+        perror(argv[1]);
+        return 1;
+    }
+    char *src = malloc(1 << 20);
+    size_t n = fread(src, 1, (1 << 20) - 1, f);
+    src[n] = 0;
+    fclose(f);
+
     if (build_jumps(src) != 0)
         return 1;
+    run(src);
     return 0;
 }
