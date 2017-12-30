@@ -40,7 +40,12 @@ static void run(const char *prog)
         case '+': tape[ptr]++; break;
         case '-': tape[ptr]--; break;
         case '.': putchar(tape[ptr]); break;
-        case ',': tape[ptr] = getchar(); break;
+        case ',': {
+            int c = getchar();
+            if (c != EOF)
+                tape[ptr] = c;
+            break;
+        }
         case '[': if (!tape[ptr]) pc = jump[pc]; break;
         case ']': if (tape[ptr]) pc = jump[pc]; break;
         }
