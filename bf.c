@@ -48,7 +48,7 @@ static int compile(const char *src)
                 return -1;
             }
             int open = stack[--sp];
-            code[open].arg = ncode + 1;
+            code[open].arg = ncode;
             code[ncode++] = (struct op){OP_JNZ, open};
             break;
         }
