@@ -47,6 +47,14 @@ static int compile(const char *src)
                 fprintf(stderr, "unmatched ]\n");
                 return -1;
             }
+            if (ncode >= 2 && code[ncode - 1].kind == OP_ADD &&
+                (code[ncode - 1].arg & 1) && code[ncode - 2].kind == OP_JZ) {
+                /* [-] or [+]: loop only exits at zero */
+                sp--;
+                ncode -= 2;
+                code[ncode++] = (struct op){OP_CLEAR, 0};
+                break;
+            }
             int open = stack[--sp];
             code[open].arg = ncode;
             code[ncode++] = (struct op){OP_JNZ, open};
@@ -79,6 +87,7 @@ static void run(void)
         }
         case OP_JZ: if (!tape[ptr]) pc = o->arg; break;
         case OP_JNZ: if (tape[ptr]) pc = o->arg; break;
+        case OP_CLEAR: tape[ptr] = 0; break;
         }
     }
 }
