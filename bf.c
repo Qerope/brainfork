@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAPE_SIZE 30000
+#define INIT_TAPE 4096
 
 enum { OP_ADD, OP_MOVE, OP_IN, OP_OUT, OP_JZ, OP_JNZ, OP_CLEAR };
 
@@ -13,7 +13,8 @@ struct op {
 
 static struct op *code;
 static int ncode;
-static unsigned char tape[TAPE_SIZE];
+static unsigned char *tape;
+static size_t tape_len;
 
 static int compile(const char *src)
 {
@@ -77,7 +78,18 @@ static void run(void)
         struct op *o = &code[pc];
         switch (o->kind) {
         case OP_ADD: tape[ptr] += o->arg; break;
-        case OP_MOVE: ptr = (ptr + o->arg + TAPE_SIZE) % TAPE_SIZE; break;
+        case OP_MOVE:
+            if ((long)ptr + o->arg < 0) {
+                fprintf(stderr, "tape underflow\n");
+                exit(1);
+            }
+            ptr += o->arg;
+            while (ptr >= tape_len) {
+                tape = realloc(tape, tape_len * 2);
+                memset(tape + tape_len, 0, tape_len);
+                tape_len *= 2;
+            }
+            break;
         case OP_OUT: putchar(tape[ptr]); break;
         case OP_IN: {
             int c = getchar();
@@ -110,6 +122,8 @@ int main(int argc, char **argv)
 
     if (compile(src) != 0)
         return 1;
+    tape_len = INIT_TAPE;
+    tape = calloc(tape_len, 1);
     run();
     return 0;
 }
