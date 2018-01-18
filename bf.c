@@ -70,6 +70,13 @@ static int compile(const char *src)
     return 0;
 }
 
+static void dump(void)
+{
+    static const char *names[] = {"add", "move", "in", "out", "jz", "jnz", "clear"};
+    for (int i = 0; i < ncode; i++)
+        printf("%4d  %-5s %d\n", i, names[code[i].kind], code[i].arg);
+}
+
 static void run(void)
 {
     size_t ptr = 0;
@@ -106,6 +113,12 @@ static void run(void)
 
 int main(int argc, char **argv)
 {
+    int dump_only = 0;
+    int argi = 1;
+    if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+        dump_only = 1;
+        argi++;
+    }
     if (argc <= argi) {
         fprintf(stderr, "usage: %s [-d] prog.bf\n", argv[0]);
         return 1;
@@ -122,6 +135,10 @@ int main(int argc, char **argv)
 
     if (compile(src) != 0)
         return 1;
+    if (dump_only) {
+        dump();
+        return 0;
+    }
     tape_len = INIT_TAPE;
     tape = calloc(tape_len, 1);
     run();
