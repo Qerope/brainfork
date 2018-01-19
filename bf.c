@@ -142,5 +142,8 @@ int main(int argc, char **argv)
     tape_len = INIT_TAPE;
     tape = calloc(tape_len, 1);
     run();
+    free(src);
+    free(code);
+    free(tape);
     return 0;
 }
