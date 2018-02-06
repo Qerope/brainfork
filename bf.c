@@ -111,6 +111,43 @@ static void run(void)
     }
 }
 
+#ifdef USE_COMPUTED_GOTO
+static void run_threaded(void)
+{
+    static void *labels[] = {&&l_add, &&l_move, &&l_in, &&l_out, &&l_jz, &&l_jnz, &&l_clear};
+    size_t ptr = 0;
+    int pc = 0;
+    struct op *o;
+
+#define NEXT do { if (pc >= ncode) return; o = &code[pc++]; goto *labels[o->kind]; } while (0)
+    NEXT;
+l_add:   tape[ptr] += o->arg; NEXT;
+l_move:
+    if ((long)ptr + o->arg < 0) {
+        fprintf(stderr, "tape underflow\n");
+        exit(1);
+    }
+    ptr += o->arg;
+    while (ptr >= tape_len) {
+        tape = realloc(tape, tape_len * 2);
+        memset(tape + tape_len, 0, tape_len);
+        tape_len *= 2;
+    }
+    NEXT;
+l_in: {
+        int c = getchar();
+        if (c != EOF)
+            tape[ptr] = c;
+        NEXT;
+    }
+l_out:   putchar(tape[ptr]); NEXT;
+l_jz:    if (!tape[ptr]) pc = o->arg + 1; NEXT;
+l_jnz:   if (tape[ptr]) pc = o->arg + 1; NEXT;
+l_clear: tape[ptr] = 0; NEXT;
+#undef NEXT
+}
+#endif
+
 int main(int argc, char **argv)
 {
     int dump_only = 0;
@@ -141,7 +178,11 @@ int main(int argc, char **argv)
     }
     tape_len = INIT_TAPE;
     tape = calloc(tape_len, 1);
+#ifdef USE_COMPUTED_GOTO
+    run_threaded();
+#else
     run();
+#endif
     free(src);
     free(code);
     free(tape);
